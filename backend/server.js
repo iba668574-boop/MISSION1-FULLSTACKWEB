@@ -2,7 +2,6 @@ require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
-
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -10,13 +9,11 @@ const Item = require("./models/Item");
 const User = require("./models/User");
 const auth = require("./middleware/auth");
 
-
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-<<<<<<< HEAD
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
@@ -36,6 +33,14 @@ app.get("/", (req, res) => {
 app.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists",
+      });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -91,40 +96,9 @@ app.post("/login", async (req, res) => {
   } catch (err) {
     res.status(500).json({
       error: err.message,
-
-console.log("MONGO_URI =", process.env.MONGO_URI);
-
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 10000
-})
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log("MongoDB Error:", err));
-
-let items = [
-  { id: 1, name: "Laptop" },
-  { id: 2, name: "Mobile" },
-  { id: 3, name: "Keyboard" }
-];
-
-// GET ALL
-app.get("/items", (req, res) => {
-  res.json(items);
-});
-
-// GET ONE
-app.get("/items/:id", (req, res) => {
-  const item = items.find(x => x.id == req.params.id);
-
-  if (item) {
-    res.json(item);
-  } else {
-    res.status(404).json({
-      message: "Item not found"
-
     });
   }
 });
-
 
 // Protected Route
 app.get("/profile", auth, (req, res) => {
@@ -134,7 +108,7 @@ app.get("/profile", auth, (req, res) => {
   });
 });
 
-// Search Feature (Mission 3 Advanced Feature)
+// Search Items
 app.get("/items", async (req, res) => {
   try {
     const search = req.query.search || "";
@@ -149,18 +123,6 @@ app.get("/items", async (req, res) => {
       error: err.message,
     });
   }
-
-// POST CREATE
-app.post("/items", (req, res) => {
-  const newItem = {
-    id: items.length + 1,
-    name: req.body.name
-  };
-
-  items.push(newItem);
-
-  res.status(201).json(newItem);
-
 });
 
 app.listen(PORT, () => {
